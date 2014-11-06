@@ -73,7 +73,7 @@ function [Xproj,projections] = HP(X, W, options)
     assert(size(XBlock,1) == size(W,1));
     L = makeLaplacian(W);    
     instanceIDs = Helpers.getDataSetIDs(X,1);
-    D11 = diag(sum(Helpers.getSubW(W,instanceIDs,1,1),2));
+    D11 = diag(sum(W(instanceIDs==1,:),2));
     
     X1 = X{1};      
     Q = XBlock'*L*XBlock;    
