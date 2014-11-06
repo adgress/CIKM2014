@@ -73,7 +73,7 @@ function [Xproj,projections] = HP(X, W, options)
     assert(size(XBlock,1) == size(W,1));
     L = makeLaplacian(W);    
     instanceIDs = Helpers.getDataSetIDs(X,1);
-    D11 = diag(sum(Helpers.getSubW(W,instanceIDs,1,1),2));    
+    D11 = diag(sum(Helpers.getSubW(W,instanceIDs,1,1),2));
     
     X1 = X{1};      
     Q = XBlock'*L*XBlock;    
@@ -81,41 +81,45 @@ function [Xproj,projections] = HP(X, W, options)
     B = B + options.reg*eye(size(B));
     [numRows,numCols] = size(XBlock);
     Bpadded = Helpers.padMatrix(B,numCols,numCols);
-    Qinv = inv(Q + .01*eye(size(Q)));    
-    V = Qinv*Bpadded;        
+    Qinv = inv(Q);
+    V = Qinv*Bpadded;                  
     
     X1dim = size(X1,2);
     V11 = V(1:X1dim,1:X1dim);    
     V21 = V(X1dim+1:end,1:X1dim);
     [A1,eigVals] = eig(V11);
-    [sortedEigVals,I] = sort(diag(eigVals),'ascend');
+    [sortedEigVals,I] = sort(diag(eigVals),'descend');
     A1 = A1(:,I);
+        
     for i=1:size(A1,2)
         ai = A1(:,i);
         v = ai'*B*ai;
         A1(:,i) = ai/sqrt(v);
     end
+    
     A2_m = V21*A1;
     Aall = [A1 ; A2_m];
     Xproj = cell(size(X));
     projections = cell(size(X));
     featureIDs = Helpers.getDataSetIDs(X,2);  
+    
     for i=1:length(X)
         Ai = Aall(featureIDs==i,:);
         if ~isinf(options.numVecs);
             Ai = Ai(:,1:options.numVecs);
         end
-        Xidim = size(X{i},2);
         if i > 1
             numVecs = size(Ai,2);
             lambdas = inv(diag(sortedEigVals(1:numVecs)));
             for j=1:numVecs
-                Ai(:,j) = Ai(:,j)*lambdas(j,j);
+                ai_j = Ai(:,j);
+                Ai(:,j) = ai_j*lambdas(j,j);
             end
         end
         Xproj{i} = X{i}*Ai;
         projections{i} = Ai;
     end
+    
 end
 
 function [L] = makeLaplacian(W)
